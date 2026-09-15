@@ -55,13 +55,13 @@ DEMO_OFFICER = {
         "password": "securepass",
         "name" : "Rajesh Kumar",
         "designation": "Senior Procurement Officer",
-        "officer_id": "GEM-PO-26"
+        "officer_id": "GEM-PO-2026"
     },
     "GEM-PO-26": {
         "password": "securepass",
         "name" : "Rajesh Kumar",
         "designation": "Senior Procurement Officer",
-        "officer_id": "GEM-PO-26"
+        "officer_id": "GEM-PO-2026"
     }
 }
 

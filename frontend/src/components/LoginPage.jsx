@@ -2,31 +2,35 @@ import React, { useState } from 'react';
 import { Shield, Lock, User, KeyRound, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function LoginPage({ onLogin }) {
+  const [email, setEmail] = useState('officer@gem.gov.in');
   const [officerId, setOfficerId] = useState('GEM-PO-2026');
   const [password, setPassword] = useState('••••••••••••');
   const [selectedRole, setSelectedRole] = useState('Senior Procurement Officer (Tender Authority)');
   const [error, setError] = useState('');
-
+  const API_BASE_URL = 'http://127.0.0.1:8000'
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     
     try {
-    const response = await fetch('${API_BASE_URL}/login/', {
+    const response = await fetch(`${API_BASE_URL}/login/`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        email,
+        email: email || officerId,
         password,
       }),
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      throw new error(data.detail || 'Login failed. Please check your credentials.');
+      throw new Error(data.detail || 'Login failed. Please check your credentials.');
     }
     localStorage.setItem('officer', JSON.stringify(data.officer));
+    if (onLogin) onLogin(data.officer);
   } catch (err) {
     setError(err.message);
   }
@@ -103,20 +107,6 @@ export default function LoginPage({ onLogin }) {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
-            <input
-              type="text"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Officer ID / Official Email"
-              />
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password / Security PIN"
-              />
-
-              <button type="submit">Sign In</button>
             
             {/* Officer ID */}
             <div>
