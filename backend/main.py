@@ -10,7 +10,7 @@ from typing import Optional, List
 import pdfplumber
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Emailstr, Field
+from pydantic import BaseModel, EmailStr, Field
 
 from database import init_db, get_db_connection, get_all_evaluations, update_bid_decision
 
