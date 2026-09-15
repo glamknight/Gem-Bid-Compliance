@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from typing import Optional, List
 
 import pdfplumber
-from fastapi import FastAPI, HTTPException, UploadFile, File
+from fastapi import FastAPI, HTTPException, UploadFile, File, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
 
@@ -47,7 +47,7 @@ app = FastAPI(
 )
 
 class LoginRequest(BaseModel):
-    email: Emailstr
+    email: EmailStr
     password: str
     
 DEMO_OFFICER = {
