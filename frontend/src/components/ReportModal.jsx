@@ -123,7 +123,7 @@ export default function ReportModal({ evaluation, onClose }) {
             </div>
           </div>
 
-          <div className="security-badge-box" style="background: #f0f4f8; padding: 10xp; border-radius: 6px; margin-top: 10px; font-family: monospace; font-size: 0.85rem;">
+          <div className="security-badge-box" style={{ background: '#d0d9e9' }}>
               <div className="flex item-center justify-between mb-3">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 flex item-center gap-1.5">
                   <span>🛡️ Cryptographic Audit Chain</span>
