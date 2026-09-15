@@ -7,19 +7,29 @@ export default function LoginPage({ onLogin }) {
   const [selectedRole, setSelectedRole] = useState('Senior Procurement Officer (Tender Authority)');
   const [error, setError] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!officerId.trim()) {
-      setError('Please enter your Officer ID or Official Gov Email');
-      return;
-    }
-    onLogin({
-      id: officerId,
-      name: officerId === 'GEM-PO-2026' ? 'Rajesh Kumar' : 'Procurement Officer',
-      role: selectedRole,
-      department: 'Ministry of Commerce & Industry',
-      clearance: 'Level-3 Tender Authority'
+    setError('');
+    
+    try {
+    const response = await fetch('${API_BASE_URL}/login/', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email,
+        password,
+      }),
     });
+
+    if (!response.ok) {
+      throw new error(data.detail || 'Login failed. Please check your credentials.');
+    }
+    localStorage.setItem('officer', JSON.stringify(data.officer));
+  } catch (err) {
+    setError(err.message);
+  }
   };
 
   const handleQuickDemoLogin = () => {
@@ -93,6 +103,20 @@ export default function LoginPage({ onLogin }) {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-4">
+            <input
+              type="text"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Officer ID / Official Email"
+              />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password / Security PIN"
+              />
+
+              <button type="submit">Sign In</button>
             
             {/* Officer ID */}
             <div>
