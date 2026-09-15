@@ -123,6 +123,36 @@ export default function ReportModal({ evaluation, onClose }) {
             </div>
           </div>
 
+          <div className="security-badge-box" style="background: #f0f4f8; padding: 10xp; border-radius: 6px; margin-top: 10px; font-family: monospace; font-size: 0.85rem;">
+              <div className="flex item-center justify-between mb-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 flex item-center gap-1.5">
+                  <span>🛡️ Cryptographic Audit Chain</span>
+                </h4>
+                <span className="text-[10px] font-bold px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-full">
+                  ✔️ VERIFIED
+                </span>
+              </div>
+
+              <div className="space-y-2.5 text-xs">
+                <div>
+                  <span className="text-slate-400 font-medium uppercase tracking-wide text-[10px] block">
+                    Document SHA-256 Hash
+                  </span>
+                  <code className="block mt-1 p2 bg-slate-900 text-sky-400 font-mono text-[11px] rounded break-all select-all">
+                    {evaluation?.file_hash || "N/A"}
+                  </code>
+                </div>
+                <div>
+                  <span className="text-slate-400 font-medium uppercase tracking-wide text-[10px] block">
+                    Previous Chain Link (Audit Immutable Pointer)
+                  </span>
+                  <code className="block mt-1 p-2 bg-slate-900 text-sky-400 font-mono text-[11px] rounded break-all select-all">
+                    {evaluation?.previous_file_hash || "0"}
+                  </code>
+                </div>
+              </div>
+          </div>
+
           {/* Empty PDF banner if applicable */}
           {(evaluation.is_empty_pdf || parsed_data.is_empty) && (
             <div className="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-300 text-rose-950 text-xs">

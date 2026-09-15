@@ -29,6 +29,8 @@ def init_db():
         officer_decision VARCHAR(50) DEFAULT 'Pending Review',
         officer_notes TEXT DEFAULT '',
         ai_summary TEXT DEFAULT '',
+        file_hash TEXT DEFAULT '',
+        previous_file_hash TEXT DEFAULT '0',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
     """)

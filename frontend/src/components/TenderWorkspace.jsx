@@ -19,6 +19,7 @@ export default function TenderWorkspace({
   const [officerNotes, setOfficerNotes] = useState('');
   const [decisionSuccessMsg, setDecisionSuccessMsg] = useState('');
   const [showReportModal, setShowReportModal] = useState(false);
+  const API_BASE_URL = "http://127.0.0.1:8000";
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -304,7 +305,7 @@ export default function TenderWorkspace({
                     onClick={() => setShowReportModal(true)}
                     className="p-3 rounded-xl bg-slate-100 hover:bg-blue-50 text-slate-800 hover:text-blue-900 border border-slate-200 transition-all font-bold text-xs flex items-center gap-2 cursor-pointer"
                   >
-                    <Eye className="w-4 h-4 text-blue-600" />
+                    <Eye size={16} color="#2563eb" />
                     <span>Certificate</span>
                   </button>
                 </div>

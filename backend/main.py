@@ -2,13 +2,17 @@ from email import message
 import io
 import re
 import json
+from sqlite3 import connect
 import urllib.request
 from datetime import datetime
 from contextlib import asynccontextmanager
 from typing import Optional, List
 
+import hashlib
+
+from fastapi.responses import JSONResponse
 import pdfplumber
-from fastapi import FastAPI, HTTPException, UploadFile, File, status
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr, Field
 
@@ -66,6 +70,12 @@ DEMO_OFFICER = {
 }
 
 # Enable CORS for frontend integration
+
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "*",
+    ]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -74,6 +84,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.exception_handler(Exception)
+async def custom_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Backend Error: {str(exc)}"},
+        headers={"Access-Control-Allow-Origin": "*"}
+    )
 
 def parse_date(date_str: str):
     for fmt in ("%d/%m/%Y", "%d-%m-%Y", "%Y/%m/%d", "%Y-%m-%d"):
@@ -82,6 +99,15 @@ def parse_date(date_str: str):
         except ValueError:
             continue
     return None
+
+def calculate_pdf_hash(file_bytes: bytes) -> str:
+    return hashlib.sha256(file_bytes).hexdigest()
+
+def get_latest_hash(conn) -> str:
+    cur = conn.cursor()
+    cur.execute("SELECT file_hash FROM bid_evalution ORDER BY id DESC LIMIT 1")
+    row = cur.fetchone()
+    return row[0] if row and row[0] else "0"
 
 
 def generate_fallback_ai_review(regex_results: dict, compliance_result: dict) -> dict:
@@ -461,13 +487,14 @@ def check_eligibility(data: TenderCheck):
         "exemption_applied": "MSME Prior Experience Exemption Applied" if (data.has_msme_cert and data.years_of_experience < 3) else "Standard Experience Criteria Met" if data.years_of_experience >= 3 else "None"
     }
 
-
+@app.post("/upload-pdf")
 @app.post("/upload-pdf/")
 async def upload_pdf(file: UploadFile = File(...)):
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(status_code=400, detail="Invalid file type. Please upload a PDF file.")
         
     content = await file.read()
+    file_hash = calculate_pdf_hash(content)
     extracted_text = ""
     page_count = 0
     try:
@@ -478,7 +505,7 @@ async def upload_pdf(file: UploadFile = File(...)):
                 if text:
                     extracted_text += text + "\n"
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error occurred while processing the PDF file: {str(e)}")
+        raise JSONResponse(status_code=500, detail=f"Error occurred while processing the PDF file: {str(e)}")
 
     # Accurate check for completely empty or blank PDF (0 pages or < 15 alphanumeric characters)
     clean_text = re.sub(r'[^A-Za-z0-9]', '', extracted_text)
@@ -505,15 +532,18 @@ async def upload_pdf(file: UploadFile = File(...)):
         try:
             conn = get_db_connection()
             cur = conn.cursor()
+            
+            previous_file_hash = get_previous_file_hash(conn, file.filename)
+            
             insert_query = """
                 INSERT INTO bid_evalution (
                     filename, tender_id, years_of_experience, turnover_amount, has_msme_cert,
                     gstn_verification, msme_verification, pan_verification, score,
                     passed_checks, failed_checks, compliance_status, officer_decision,
                     officer_notes, ai_summary, epfo_esic_verification, startup_nsic_oem,
-                    blacklist_verification, is_empty_pdf
+                    blacklist_verification, is_empty_pdf, file_hash, previous_file_hash
                 )
-                VALUES (?, ?, 0, 0, 0, '{}', '{}', '{}', 0, '[]', ?, 'Rejected - Empty Document', 'Rejected', 'Automatically rejected due to empty/blank PDF file.', ?, '{}', '{}', '{}', 1)
+                VALUES (?, ?, 0, 0, 0, '{}', '{}', '{}', 0, '[]', ?, 'Rejected - Empty Document', 'Rejected', 'Automatically rejected due to empty/blank PDF file.', ?, '{}', '{}', '{}', 1, ?, ?)
             """
             cur.execute(insert_query, (
                 file.filename,
@@ -602,6 +632,10 @@ async def upload_pdf(file: UploadFile = File(...)):
             "evaluated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
 
+    conn = get_db_connection()
+    cur = conn.cursor()
+    previous_file_hash = get_previous_file_hash(conn, file.filename)
+    
     # Extract Company / Bidder Name
     company_name_match = re.search(
         r"(?:Company(?:\s+Name)?|Bidder(?:\s+Name)?|Firm(?:\s+Name)?|Legal(?:\s+Name)?|Enterprise(?:\s+Name)?|M/s\.?|Vendor(?:\s+Name)?)\s*[:=-]\s*([^\n\r,]+)",
@@ -989,9 +1023,9 @@ Respond ONLY as JSON:
                 filename, tender_id, years_of_experience, turnover_amount, has_msme_cert,
                 gstn_verification, msme_verification, pan_verification, score,
                 passed_checks, failed_checks, compliance_status, ai_summary,
-                epfo_esic_verification, startup_nsic_oem, blacklist_verification, is_empty_pdf
+                epfo_esic_verification, startup_nsic_oem, blacklist_verification, is_empty_pdf, file_hash, previous_file_hash
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?)
         """
 
         cur.execute(insert_query, (
@@ -1001,7 +1035,9 @@ Respond ONLY as JSON:
             ai_review.get("summary", ""),
             json.dumps(epfo_esic_verification),
             json.dumps(startup_nsic_oem),
-            json.dumps(blacklist_verification)
+            json.dumps(blacklist_verification),
+            file_hash,
+            previous_file_hash
         ))
         conn.commit()
         record_id = cur.lastrowid
@@ -1012,6 +1048,8 @@ Respond ONLY as JSON:
     return {
         "filename": file.filename,
         "id": record_id,
+        "file_hash": file_hash,
+        "previous_file_hash": previous_file_hash,
         "tender_id": tender_ref_id,
         "risk_level": risk_level,
         "is_empty_pdf": False,
@@ -1084,7 +1122,7 @@ def get_evaluation(filename: str):
         evaluations.append(item)
     return evaluations
 
-
+@app.get("/all-evaluations/")
 @app.get("/all-evaluations")
 def list_all_evaluations():
     return get_all_evaluations()
@@ -1100,3 +1138,10 @@ def update_decision_endpoint(req: DecisionUpdate):
 def chat(request: ChatRequest):
     answer = chat_with_bid(request.question, request.filename)
     return {"question": request.question, "filename": request.filename, "answer": answer}
+
+
+def get_previous_file_hash(conn, filename: str) -> str:
+    cur = conn.cursor()
+    cur.execute("SELECT file_hash FROM bid_evalution WHERE filename != '' ORDER BY created_at DESC LIMIT 1;")
+    row = cur.fetchone()
+    return row[0] if row and row[0] else '0'
