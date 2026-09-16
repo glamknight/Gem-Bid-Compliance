@@ -1,4 +1,4 @@
-const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) || 'http://localhost:8000';
+const API_BASE_URL = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) || 'https://gem-bid-compliance-1.onrender.com';
 
 // Fallback Mock Data for instant offline demonstrations if backend is starting up
 export const SAMPLE_BIDS_CATALOG = [
