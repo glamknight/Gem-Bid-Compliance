@@ -49,7 +49,7 @@ export default function App() {
     };
 
     setCurrentEvaluation(initialSample);
-
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://gem-bid-compliance-1.onrender.com";
     const checkApi = async () => {
       const status = await checkBackendHealth();
       setBackendStatus(status);
