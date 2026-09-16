@@ -19,7 +19,7 @@ export default function TenderWorkspace({
   const [officerNotes, setOfficerNotes] = useState('');
   const [decisionSuccessMsg, setDecisionSuccessMsg] = useState('');
   const [showReportModal, setShowReportModal] = useState(false);
-  const API_BASE_URL = "http://127.0.0.1:8000";
+  const API_BASE_URL = "https://gem-bid-compliance-1.onrender.com";
 
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];

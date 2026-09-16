@@ -7,13 +7,13 @@ export default function LoginPage({ onLogin }) {
   const [password, setPassword] = useState('••••••••••••');
   const [selectedRole, setSelectedRole] = useState('Senior Procurement Officer (Tender Authority)');
   const [error, setError] = useState('');
-  const API_BASE_URL = 'http://127.0.0.1:8000'
+  const API_BASE_URL = 'https://gem-bid-compliance-1.onrender.com'
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     
     try {
-    const response = await fetch(`${API_BASE_URL}/login/`, {
+    const response = await fetch(`${API_BASE_URL}/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
