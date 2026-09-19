@@ -52,17 +52,17 @@ app = FastAPI(
 
 class LoginRequest(BaseModel):
     email: EmailStr
-    password: str
+    
     
 DEMO_OFFICER = {
     "officer@gem.gov.in": {
-        "password": "securepass",
+        
         "name" : "Rajesh Kumar",
         "designation": "Senior Procurement Officer",
         "officer_id": "GEM-PO-2026"
     },
     "GEM-PO-26": {
-        "password": "securepass",
+        
         "name" : "Rajesh Kumar",
         "designation": "Senior Procurement Officer",
         "officer_id": "GEM-PO-2026"
@@ -288,8 +288,8 @@ class ChatRequest(BaseModel):
 @app.post("/login/")
 def login(credentials: LoginRequest):
     officer = DEMO_OFFICER.get(credentials.email) or DEMO_OFFICER.get(credentials.email.split('@')[0])
-    if not officer or officer["password"] != credentials.password:
-        raise HTTPException(status_code=401, detail="Invalid email or password")
+    if not officer :
+        raise HTTPException(status_code=401, detail="Invalid email")
     return {
         "message": "Login successful",
         "officer": {
